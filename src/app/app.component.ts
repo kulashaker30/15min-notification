@@ -10,8 +10,8 @@ import 'rxjs/add/operator/map'
 export class AppComponent {
   title = 'app';
 
-  key: 'e67009f39dbc7643ba207648a629e415';
-  token: '737e895614ca2ac691f367ea98dc8f0e1f8f1eb4197a330308fe1b136784caa1';  
+  key = 'e67009f39dbc7643ba207648a629e415';
+  token = '737e895614ca2ac691f367ea98dc8f0e1f8f1eb4197a330308fe1b136784caa1';  
 
   public cards = [];
   public notifiedCards = [];
