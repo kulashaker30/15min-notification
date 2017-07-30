@@ -9,6 +9,10 @@ import 'rxjs/add/operator/map'
 })
 export class AppComponent {
   title = 'app';
+
+  key: 'e67009f39dbc7643ba207648a629e415';
+  token: '737e895614ca2ac691f367ea98dc8f0e1f8f1eb4197a330308fe1b136784caa1';  
+
   public cards = [];
   public notifiedCards = [];
 
@@ -19,7 +23,9 @@ export class AppComponent {
 
   reloadCards() {
     console.log('Executing reloadCards...');
-    this.http.get('https://api.trello.com/1/boards/9ZOtFb4L/cards?key=e67009f39dbc7643ba207648a629e415&token=737e895614ca2ac691f367ea98dc8f0e1f8f1eb4197a330308fe1b136784caa1')
+    // Delete previous (later than today) cards.
+    this.deleteCardsNotTodayInNotificationCard()
+    this.http.get('https://api.trello.com/1/boards/9ZOtFb4L/cards?key=' + this.key + '&token=' + this.token)
       .map(
         (response: Response) => { 
             let data = response.json();
@@ -42,9 +48,12 @@ export class AppComponent {
 
     this.cards.forEach(card => {
 
+      this.removeCardFromNoticationCards(card);
+
       let currentDate: any = new Date();
       let cardDueDate: any = new Date(card.due)
       let isDueDate: any = false;
+
       if(currentDate < cardDueDate) {
         isDueDate = cardDueDate - currentDate <= 900000;
       }
@@ -80,8 +89,8 @@ export class AppComponent {
   triggerNotificationViaComment(card: any) {
     this.http.post('https://api.trello.com//1/cards/' + card.shortLink + '/actions/comments',
       { 
-        key: 'e67009f39dbc7643ba207648a629e415', 
-        token: '737e895614ca2ac691f367ea98dc8f0e1f8f1eb4197a330308fe1b136784caa1', 
+        key: this.key,
+        token: this.token,      
         text: '@card This task is due in 15 minutes.' 
       })
       .map(
@@ -98,5 +107,37 @@ export class AppComponent {
         });  
   }
 
+  removeCardFromNoticationCards(card: any) {
+    let index = -1;
+    for(let i=0; i <= this.notifiedCards.length -1; i++) {
+      if(card.id == this.notifiedCards[i].id) {
+        index = i;
+        break;
+      }
+    }
 
+    if(index != -1) {
+      this.notifiedCards = this.notifiedCards.splice(index, 1);
+      localStorage.setItem('notifiedCard', JSON.stringify(this.notifiedCards));
+    }
+  }
+
+  deleteCardsNotTodayInNotificationCard() {
+
+    this.notifiedCards = this.notifiedCards.filter(function(notifiedCard){
+      
+      let dt = new Date();
+
+      let cardDueDate = new Date(notifiedCard.due);
+      cardDueDate = new Date(Date.parse((cardDueDate.getMonth() + 1) + '/' + cardDueDate.getDate() + '/' + cardDueDate.getFullYear()));
+      let currentDate = new Date(Date.parse((dt.getMonth() + 1) + '/' + dt.getDate() + '/' + dt.getFullYear()));
+
+      if(cardDueDate < currentDate) {
+        return notifiedCard;
+      }
+
+    });
+
+    localStorage.setItem('notifiedCards', JSON.stringify(this.notifiedCards));
+  }
 }
